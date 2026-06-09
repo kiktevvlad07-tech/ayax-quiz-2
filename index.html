@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AYAX QUIZ 2.0 — Угадай ЖК Краснодара</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#07111f;
+  --panel:rgba(15,23,42,.78);
+  --panel2:rgba(30,41,59,.68);
+  --cyan:#22d3ee;
+  --blue:#38bdf8;
+  --violet:#a855f7;
+  --pink:#ec4899;
+  --green:#22c55e;
+  --yellow:#facc15;
+  --red:#fb7185;
+  --text:#f8fafc;
+  --muted:#cbd5e1;
+}
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(34,211,238,.26), transparent 30%),
+    radial-gradient(circle at 85% 15%, rgba(168,85,247,.24), transparent 30%),
+    radial-gradient(circle at 50% 95%, rgba(236,72,153,.16), transparent 35%),
+    linear-gradient(135deg,#050816 0%,#081225 45%,#0f172a 100%);
+  color:var(--text);
+  text-align:center;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size:44px 44px;
+  mask-image:linear-gradient(to bottom, rgba(0,0,0,.6), transparent 85%);
+  pointer-events:none;
+}
+header{
+  position:relative;
+  z-index:1;
+  padding:22px 20px 18px;
+  border-bottom:1px solid rgba(34,211,238,.35);
+  background:rgba(2,6,23,.58);
+  backdrop-filter:blur(18px);
+  box-shadow:0 0 40px rgba(34,211,238,.12);
+}
+h1{
+  font-size:42px;
+  letter-spacing:1px;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#22d3ee,#a855f7,#ec4899);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:0 0 24px rgba(34,211,238,.22);
+}
+.subtitle{
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.45;
+}
+.creator{
+  margin-top:10px;
+  color:#e0f2fe;
+  font-size:15px;
+  line-height:1.4;
+}
+.creator strong{color:white;}
+.scoreboard{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-top:20px;
+  flex-wrap:wrap;
+}
+.team{
+  background:linear-gradient(180deg, rgba(15,23,42,.88), rgba(30,41,59,.62));
+  border:1px solid rgba(56,189,248,.34);
+  padding:14px 18px;
+  border-radius:20px;
+  font-size:18px;
+  font-weight:bold;
+  min-width:185px;
+  box-shadow:0 0 22px rgba(34,211,238,.09);
+}
+.team.active{
+  border-color:var(--cyan);
+  box-shadow:0 0 22px rgba(34,211,238,.42), inset 0 0 22px rgba(34,211,238,.08);
+  transform:translateY(-2px);
+}
+.team small{display:block;color:var(--muted);font-size:12px;margin-bottom:5px;}
+.team-score{font-size:28px;color:#fff;}
+.turn{
+  margin-top:16px;
+  font-size:24px;
+  color:#e0f2fe;
+  font-weight:bold;
+}
+.round-badge{
+  display:inline-block;
+  margin-top:14px;
+  padding:8px 14px;
+  border-radius:999px;
+  color:#fff;
+  background:rgba(168,85,247,.16);
+  border:1px solid rgba(168,85,247,.55);
+  box-shadow:0 0 18px rgba(168,85,247,.18);
+  font-size:14px;
+  font-weight:bold;
+  letter-spacing:.5px;
+}
+.timer-box{
+  margin:18px auto 0;
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle, rgba(15,23,42,.92), rgba(15,23,42,.56)),
+    conic-gradient(from 180deg, var(--cyan), var(--violet), var(--pink), var(--cyan));
+  padding:3px;
+  box-shadow:0 0 35px rgba(34,211,238,.24);
+}
+.timer-inner{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#07111f;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.timer-label{font-size:13px;color:var(--muted);margin-bottom:3px;}
+.timer{font-size:46px;font-weight:900;color:var(--cyan);}
+.timer.danger{color:var(--red);animation:pulse .7s infinite;text-shadow:0 0 22px rgba(251,113,133,.65);}
+.game-container{position:relative;z-index:1;padding:28px 20px 50px;}
+.image-wrapper{
+  position:relative;
+  width:900px;
+  max-width:95%;
+  height:560px;
+  margin:0 auto;
+  overflow:hidden;
+  border-radius:28px;
+  border:1px solid rgba(34,211,238,.65);
+  box-shadow:0 0 34px rgba(34,211,238,.27),0 0 70px rgba(168,85,247,.12);
+  background:#020617;
+}
+.image-wrapper img{width:100%;height:100%;object-fit:cover;display:block;}
+.grid{
+  position:absolute;
+  inset:0;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+}
+.tile{
+  background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(49,46,129,.94));
+  border:1px solid rgba(56,189,248,.25);
+  cursor:pointer;
+  transition:.28s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:900;
+  color:#e0f2fe;
+  text-shadow:0 0 16px rgba(34,211,238,.55);
+}
+.tile:hover{background:linear-gradient(135deg,rgba(14,165,233,.62),rgba(168,85,247,.62));}
+.tile.hidden{opacity:0;transform:scale(.94);pointer-events:none;}
+.controls{
+  margin-top:28px;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+input,select{
+  padding:15px 16px;
+  border:1px solid rgba(34,211,238,.32);
+  border-radius:16px;
+  font-size:17px;
+  outline:none;
+  background:rgba(15,23,42,.88);
+  color:white;
+  box-shadow:inset 0 0 18px rgba(2,6,23,.45);
+}
+input::placeholder{color:#94a3b8;}
+#answerInput{width:330px;}
+button{
+  padding:15px 22px;
+  border:none;
+  border-radius:16px;
+  color:white;
+  font-size:17px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.22s;
+  letter-spacing:.2px;
+}
+button:hover{transform:translateY(-2px) scale(1.02);filter:brightness(1.08);}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none;}
+.answer-button{background:linear-gradient(135deg,#06b6d4,#2563eb);box-shadow:0 0 22px rgba(34,211,238,.34);}
+.hint-button{background:linear-gradient(135deg,#8b5cf6,#d946ef);box-shadow:0 0 22px rgba(168,85,247,.34);}
+.pass-button{background:linear-gradient(135deg,#ef4444,#be123c);box-shadow:0 0 22px rgba(251,113,133,.28);}
+.pause-button,.neutral-button{background:rgba(30,41,59,.9);border:1px solid rgba(148,163,184,.32);box-shadow:0 0 18px rgba(148,163,184,.1);}
+.info{
+  margin:24px auto 0;
+  max-width:880px;
+  font-size:18px;
+  color:var(--muted);
+}
+.poem-card{
+  width:900px;
+  max-width:95%;
+  min-height:430px;
+  margin:0 auto;
+  padding:34px 28px;
+  border-radius:28px;
+  background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(15,23,42,.58));
+  border:1px solid rgba(168,85,247,.45);
+  box-shadow:0 0 34px rgba(168,85,247,.22),0 0 80px rgba(34,211,238,.08);
+  display:none;
+}
+.question-count{font-size:18px;color:var(--cyan);font-weight:bold;margin-bottom:12px;}
+.poem-lines{
+  font-size:34px;
+  line-height:1.35;
+  font-weight:800;
+  margin:18px auto 24px;
+  max-width:780px;
+}
+.current-price{
+  display:inline-block;
+  padding:12px 20px;
+  border-radius:999px;
+  background:rgba(34,211,238,.12);
+  border:1px solid rgba(34,211,238,.45);
+  color:white;
+  font-weight:900;
+  font-size:20px;
+}
+.hints{
+  margin:22px auto 0;
+  max-width:760px;
+  display:flex;
+  gap:12px;
+  flex-direction:column;
+}
+.hint-line{
+  padding:14px 18px;
+  border-radius:16px;
+  background:rgba(168,85,247,.12);
+  border:1px solid rgba(168,85,247,.35);
+  color:#f5d0fe;
+  font-size:18px;
+  font-weight:bold;
+}
+.footer{
+  position:relative;
+  z-index:1;
+  padding:24px 20px 32px;
+  color:#94a3b8;
+  font-size:14px;
+  line-height:1.6;
+}
+.start-screen{
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(34,211,238,.24), transparent 32%),
+    radial-gradient(circle at 80% 20%, rgba(168,85,247,.25), transparent 33%),
+    linear-gradient(135deg,rgba(2,6,23,.98),rgba(15,23,42,.98));
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+  padding:22px;
+}
+.start-card{
+  max-width:820px;
+  width:96%;
+  border-radius:30px;
+  padding:34px 30px;
+  background:rgba(15,23,42,.76);
+  border:1px solid rgba(34,211,238,.45);
+  box-shadow:0 0 45px rgba(34,211,238,.18),0 0 80px rgba(168,85,247,.12);
+  backdrop-filter:blur(18px);
+}
+.start-screen h2{
+  font-size:58px;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#22d3ee,#a855f7,#ec4899);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.start-rules{
+  font-size:19px;
+  max-width:760px;
+  line-height:1.55;
+  color:#e2e8f0;
+  margin:18px auto 22px;
+}
+.team-settings{
+  background:rgba(2,6,23,.42);
+  border:1px solid rgba(56,189,248,.28);
+  border-radius:22px;
+  padding:20px;
+  max-width:620px;
+  width:95%;
+  margin:0 auto 24px;
+}
+.team-settings label{display:block;margin:10px 0 6px;color:#67e8f9;font-weight:bold;text-align:left;}
+.team-name-input{width:100%;margin-bottom:8px;}
+.start-button{
+  padding:20px 42px;
+  font-size:25px;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6,#d946ef);
+  box-shadow:0 0 32px rgba(168,85,247,.38);
+}
+.modal{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%);
+  background:transparent;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  padding:12px;
+  pointer-events:none;
+}
+.modal-card{
+  background:rgba(2,6,23,.96);
+  border:1px solid rgba(34,211,238,.55);
+  padding:24px 28px;
+  border-radius:24px;
+  max-width:620px;
+  width:92vw;
+  text-align:center;
+  box-shadow:0 0 38px rgba(34,211,238,.28),0 0 70px rgba(168,85,247,.12);
+  pointer-events:auto;
+}
+.modal-title{font-size:32px;color:#4ade80;margin-bottom:8px;text-shadow:0 0 18px rgba(74,222,128,.36);}
+.modal-name{font-size:30px;margin-bottom:8px;color:#fff;}
+.modal-points{font-size:22px;margin-bottom:18px;color:#67e8f9;}
+.full-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.86);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+  padding:20px;
+  backdrop-filter:blur(10px);
+}
+.game-over-title{font-size:46px;color:#fff;margin-bottom:16px;text-shadow:0 0 24px rgba(34,211,238,.35);}
+.game-over-score{font-size:25px;line-height:1.65;color:white;margin-bottom:28px;}
+.creator-final{color:#cbd5e1;font-size:15px;line-height:1.5;margin-top:10px;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.08);}100%{transform:scale(1);}}
+@media(max-width:768px){
+  h1{font-size:28px;}
+  .image-wrapper{height:350px;}
+  .team{font-size:16px;padding:12px 14px;min-width:145px;}
+  .turn{font-size:20px;}
+  #answerInput{width:92%;}
+  .tile{font-size:24px;}
+  .timer-box{width:122px;height:122px;}
+  .timer{font-size:36px;}
+  .start-screen h2{font-size:36px;}
+  .start-rules{font-size:16px;}
+  .poem-card{min-height:360px;padding:24px 18px;}
+  .poem-lines{font-size:24px;}
+  .modal-title{font-size:24px;}
+  .modal-name{font-size:24px;}
+  .modal-points{font-size:18px;}
+  .game-over-title{font-size:30px;}
+  .game-over-score{font-size:20px;}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🏆 AYAX QUIZ 2.0</h1>
+<div class="subtitle">Угадай ЖК Краснодара • Интерактивный тренажёр по новостройкам</div>
+<div class="creator">
+Создано:<br>
+<strong>Владислав Киктев</strong><br>
+Амбассадор АЯКС | Офис 24
+</div>
+<div class="round-badge" id="roundBadge">РАУНД 1 • ФРАГМЕНТЫ</div>
+<div class="scoreboard" id="scoreboard"></div>
+<div class="turn" id="turn">Настройте команды и начните игру</div>
+<div class="timer-box">
+  <div class="timer-inner">
+    <div class="timer-label">секунд</div>
+    <div class="timer" id="timer">60</div>
+  </div>
+</div>
+</header>
+
+<div class="game-container">
+
+<div id="startScreen" class="start-screen">
+  <div class="start-card">
+    <h2>🏆 AYAX QUIZ 2.0</h2>
+    <div class="subtitle">Угадай ЖК Краснодара</div>
+    <div class="creator" style="margin:18px 0 10px">
+      Создано:<br>
+      <strong>Владислав Киктев</strong><br>
+      Амбассадор АЯКС | Офис 24
+    </div>
+    <div class="start-rules">
+      • Раунд 1: угадываем ЖК по фрагментам<br>
+      • Раунд 2: угадываем ЖК по загадкам<br>
+      • 60 секунд на попытку<br>
+      • Неверный ответ — переход хода<br>
+      • Во втором раунде можно отыграться: 50 / 30 / 15 очков
+    </div>
+
+    <div class="team-settings">
+      <label>Количество команд:</label>
+      <select id="teamCount" onchange="renderTeamInputs()">
+        <option value="2">2 команды</option>
+        <option value="3">3 команды</option>
+        <option value="4">4 команды</option>
+      </select>
+      <div id="teamInputs"></div>
+    </div>
+
+    <button class="start-button" onclick="startGame()">▶ НАЧАТЬ ИГРУ</button>
+  </div>
+</div>
+
+<div class="image-wrapper" id="imageWrapper">
+  <img id="zhkImage" src="images/ogurci.jpg">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="poem-card" id="poemCard">
+  <div class="question-count" id="poemCount">Вопрос 1 из 10</div>
+  <div class="poem-lines" id="poemText"></div>
+  <div class="current-price" id="currentPrice">Стоимость вопроса: 50 очков</div>
+  <div class="hints" id="hintsBox"></div>
+</div>
+
+<div class="controls">
+  <input type="text" id="answerInput" placeholder="Введите название ЖК"/>
+  <button class="answer-button" onclick="checkAnswer()">Ответить</button>
+  <button class="hint-button" id="hint1Button" onclick="showHint(1)" style="display:none;">💡 Подсказка 1</button>
+  <button class="hint-button" id="hint2Button" onclick="showHint(2)" style="display:none;">💡 Подсказка 2</button>
+  <button class="pass-button" onclick="passTurn()">Передать ход</button>
+  <button class="pause-button" id="pauseButton" onclick="togglePause()">⏸ Пауза</button>
+  <button class="neutral-button" onclick="restartTimer()">Перезапустить таймер</button>
+</div>
+
+<div class="info" id="info">🎯 Раунд 1: чем меньше открыто квадратов — тем больше очков</div>
+</div>
+
+<div class="footer">Владислав Киктев | Амбассадор АЯКС | Офис 24</div>
+
+<script>
+const zhkList=[
+  {name:"Огурцы",answers:["огурцы","жк огурцы"],image:"images/ogurci.jpg"},
+  {name:"Патрики",answers:["патрики","жк патрики"],image:"images/patriki.jpg"},
+  {name:"Народные кварталы",answers:["народные кварталы","жк народные кварталы"],image:"images/narodnye-kvartaly.jpg"},
+  {name:"Иначе",answers:["иначе","жк иначе"],image:"images/inache.jpg"},
+  {name:"Грейд",answers:["грейд","жк грейд","grade","жк grade"],image:"images/grade.jpg"},
+  {name:"Цитрус",answers:["цитрус","жк цитрус"],image:"images/citrus.jpg"},
+  {name:"Родные просторы",answers:["родные просторы","жк родные просторы"],image:"images/rodnye-prostory.jpg"},
+  {name:"Южные соседи",answers:["южные соседи","жк южные соседи"],image:"images/yuzhnye-sosedi.jpg"},
+  {name:"Традиции",answers:["традиции","жк традиции"],image:"images/tradicii.jpg"},
+  {name:"Догма Парк",answers:["догма парк","жк догма парк","dogma park","жк dogma park"],image:"images/dogma-park.jpg"}
+];
+
+const poemQuestions=[
+  {
+    name:"Самолёт",
+    answers:["самолет","самолёт","жк самолет","жк самолёт"],
+    poem:["Проект настолько всем известен,","Что знают даже новички.","О нём обычно вспоминают,","Когда о жилье идут разговоры."],
+    hints:["Название связано с авиацией.","Один из крупнейших проектов Западного обхода."]
+  },
+  {
+    name:"Смородина",
+    answers:["смородина","жк смородина"],
+    poem:["Названье связано с природой,","Но речь совсем не про сады.","Здесь ищут новые квартиры","Для повседневной жизни и мечты."],
+    hints:["В названии присутствует ягода.","Проект расположен в активно развивающейся части города."]
+  },
+  {
+    name:"Коллекция",
+    answers:["коллекция","жк коллекция"],
+    poem:["Не экспонаты и не галерея,","Но каждый корпус со своим лицом.","Здесь постарались объединить","Разные идеи под одним крылом."],
+    hints:["Название часто встречается в музеях и выставках.","Находится в районе Западного обхода."]
+  },
+  {
+    name:"Парк Победы",
+    answers:["парк победы","жк парк победы"],
+    poem:["Не только стены и квартиры","Здесь стали частью общей идеи.","О прошлом помнят даже корпуса,","Напоминая о великих людях."],
+    hints:["Литеры названы в честь героев.","Название комплекса связано с главным праздником 9 мая."]
+  },
+  {
+    name:"Лето",
+    answers:["лето","жк лето"],
+    poem:["Здесь в названии настроение,","Которое знакомо всем.","Тепло, прогулки и каникулы —","Ассоциации без лишних тем."],
+    hints:["Название связано с одним из времён года.","Находится в районе Западного обхода."]
+  },
+  {
+    name:"Архитектор",
+    answers:["архитектор","жк архитектор"],
+    poem:["Его назвали в честь профессии,","Без которой город не растёт.","Она сначала всё рисует,","А после строит и живёт."],
+    hints:["Название связано со специалистом, который проектирует здания.","Проект от застройщика ЮгСтройИмпериал."]
+  },
+  {
+    name:"История",
+    answers:["история","жк история"],
+    poem:["Прошлое здесь лишь в названии,","А всё остальное про сейчас.","Проект напоминает людям,","Что время связывает нас."],
+    hints:["Название связано с событиями прошлого.","Проект расположен в микрорайоне Новознаменский."]
+  },
+  {
+    name:"Народные кварталы",
+    answers:["народные кварталы","жк народные кварталы"],
+    poem:["Не для царей и не для знати,","Не для владельцев островов.","Его название подскажет,","Кто здесь важнее громких слов."],
+    hints:["Речь идёт об обычных жителях.","ЖК расположен в районе Западного обхода."]
+  },
+  {
+    name:"Патрики",
+    answers:["патрики","жк патрики"],
+    poem:["Столичный образ и характер","Здесь угадают без подсказок.","Он выделяется на фоне","Своих соседей и развязок."],
+    hints:["Название вызывает ассоциацию с известным районом Москвы.","Один из самых узнаваемых новых проектов Краснодара."]
+  },
+  {
+    name:"Огурцы",
+    answers:["огурцы","жк огурцы"],
+    poem:["На огородах летом встретишь","Его практически везде.","А здесь под этим необычным словом","Живут не на гряде."],
+    hints:["Частый гость теплиц и огородов.","Находится в микрорайоне Молодёжный."]
+  }
+];
+
+let teams=[];
+let currentIndex=0;
+let currentPoemIndex=0;
+let currentTeamIndex=0;
+let timeLeft=60;
+let timerInterval=null;
+let audioContext=null;
+let gameStarted=false;
+let gameFinished=false;
+let isPaused=false;
+let gameMode="image";
+let hintLevel=0;
+
+const image=document.getElementById("zhkImage");
+const imageWrapper=document.getElementById("imageWrapper");
+const grid=document.getElementById("grid");
+const poemCard=document.getElementById("poemCard");
+const poemCount=document.getElementById("poemCount");
+const poemText=document.getElementById("poemText");
+const currentPrice=document.getElementById("currentPrice");
+const hintsBox=document.getElementById("hintsBox");
+const timerEl=document.getElementById("timer");
+const pauseButton=document.getElementById("pauseButton");
+const scoreboard=document.getElementById("scoreboard");
+const roundBadge=document.getElementById("roundBadge");
+const info=document.getElementById("info");
+const hint1Button=document.getElementById("hint1Button");
+const hint2Button=document.getElementById("hint2Button");
+
+function renderTeamInputs(){
+  const count=Number(document.getElementById("teamCount").value);
+  const box=document.getElementById("teamInputs");
+  box.innerHTML="";
+  for(let i=1;i<=count;i++){
+    box.innerHTML+=`
+      <label>Название команды ${i}:</label>
+      <input class="team-name-input" id="teamName${i}" value="Команда ${i}">
+    `;
+  }
+}
+
+function buildTeams(){
+  const count=Number(document.getElementById("teamCount").value);
+  teams=[];
+  for(let i=1;i<=count;i++){
+    const input=document.getElementById("teamName"+i);
+    teams.push({name:input.value.trim()||"Команда "+i,score:0});
+  }
+}
+
+function renderScoreboard(){
+  scoreboard.innerHTML="";
+  teams.forEach((team,index)=>{
+    const div=document.createElement("div");
+    div.className="team"+(index===currentTeamIndex?" active":"");
+    div.innerHTML=`<small>${index+1} место</small>${team.name}<div class="team-score" id="score${index}">${team.score}</div>`;
+    scoreboard.appendChild(div);
+  });
+}
+
+function updateScores(){
+  teams.forEach((team,index)=>{
+    const el=document.getElementById("score"+index);
+    if(el) el.innerText=team.score;
+  });
+}
+
+function updateTurn(){
+  renderScoreboard();
+  if(!gameFinished&&teams[currentTeamIndex]){
+    document.getElementById("turn").innerText="Ход: "+teams[currentTeamIndex].name;
+  }
+}
+
+function startGame(){
+  buildTeams();
+  gameStarted=true;
+  gameFinished=false;
+  isPaused=false;
+  currentTeamIndex=0;
+  currentIndex=0;
+  currentPoemIndex=0;
+  gameMode="image";
+  document.getElementById("startScreen").remove();
+  image.src=zhkList[currentIndex].image;
+  createGrid();
+  updateTurn();
+  startTimer();
+}
+
+function normalizeAnswer(text){
+  return text.toLowerCase()
+    .replaceAll("ё","е")
+    .replaceAll("жк","")
+    .replaceAll(".","")
+    .replaceAll(",","")
+    .replaceAll("-"," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function createGrid(){
+  grid.innerHTML="";
+  for(let i=0;i<16;i++){
+    const tile=document.createElement("div");
+    tile.classList.add("tile");
+    tile.innerText=i+1;
+    tile.addEventListener("click",()=>{
+      if(gameStarted&&!gameFinished&&gameMode==="image"){
+        tile.classList.add("hidden");
+      }
+    });
+    grid.appendChild(tile);
+  }
+}
+
+function revealFullImage(){
+  document.querySelectorAll(".tile").forEach(tile=>tile.classList.add("hidden"));
+}
+
+function initAudio(){
+  if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();}
+}
+
+function playBeep(type="short"){
+  try{
+    initAudio();
+    const oscillator=audioContext.createOscillator();
+    const gainNode=audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.type="sine";
+    if(type==="long"){
+      oscillator.frequency.value=220;
+      gainNode.gain.value=.25;
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime+.7);
+    }else{
+      oscillator.frequency.value=880;
+      gainNode.gain.value=.14;
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime+.12);
+    }
+  }catch(error){}
+}
+
+function startTimer(){
+  if(gameFinished)return;
+  clearInterval(timerInterval);
+  isPaused=false;
+  pauseButton.innerText="⏸ Пауза";
+  timerEl.classList.remove("danger");
+  timerInterval=setInterval(()=>{
+    if(gameFinished||isPaused)return;
+    timeLeft--;
+    timerEl.innerText=timeLeft;
+    if(timeLeft<=10&&timeLeft>0){
+      timerEl.classList.add("danger");
+      playBeep("short");
+    }
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      timerEl.innerText="0";
+      playBeep("long");
+      showSimpleModal("⏰ Время вышло","Ход переходит следующей команде",()=>{
+        switchTeam();
+        resetTimer();
+        startTimer();
+      });
+    }
+  },1000);
+}
+
+function resetTimer(){
+  timeLeft=60;
+  timerEl.innerText=timeLeft;
+  timerEl.classList.remove("danger");
+  isPaused=false;
+  pauseButton.innerText="⏸ Пауза";
+}
+
+function restartTimer(){
+  if(gameStarted&&!gameFinished){
+    clearInterval(timerInterval);
+    resetTimer();
+    startTimer();
+  }
+}
+
+function togglePause(){
+  if(!gameStarted||gameFinished)return;
+  isPaused=!isPaused;
+  pauseButton.innerText=isPaused?"▶ Продолжить":"⏸ Пауза";
+  if(isPaused) timerEl.classList.remove("danger");
+}
+
+function switchTeam(){
+  if(gameFinished)return;
+  currentTeamIndex++;
+  if(currentTeamIndex>=teams.length) currentTeamIndex=0;
+  updateTurn();
+}
+
+function passTurn(){
+  if(!gameStarted||gameFinished)return;
+  playBeep("short");
+  switchTeam();
+  restartTimer();
+}
+
+function getCurrentQuestion(){
+  return gameMode==="image" ? zhkList[currentIndex] : poemQuestions[currentPoemIndex];
+}
+
+function getPoemPoints(){
+  if(hintLevel===0) return 50;
+  if(hintLevel===1) return 30;
+  return 15;
+}
+
+function checkAnswer(){
+  if(!gameStarted||gameFinished)return;
+  initAudio();
+
+  const input=document.getElementById("answerInput");
+  const value=normalizeAnswer(input.value);
+  const question=getCurrentQuestion();
+  const correctAnswers=question.answers.map(a=>normalizeAnswer(a));
+
+  if(!value){
+    showSimpleModal("Введите ответ","Поле ответа пустое.",null);
+    return;
+  }
+
+  if(correctAnswers.includes(value)){
+    clearInterval(timerInterval);
+    isPaused=false;
+
+    let points=0;
+    if(gameMode==="image"){
+      const opened=document.querySelectorAll(".tile.hidden").length;
+      points=100-opened*5;
+      if(points<20) points=20;
+      revealFullImage();
+    }else{
+      points=getPoemPoints();
+    }
+
+    teams[currentTeamIndex].score+=points;
+    updateScores();
+    playBeep("long");
+
+    document.body.insertAdjacentHTML("beforeend",`
+      <div id="correctModal" class="modal">
+        <div class="modal-card">
+          <h2 class="modal-title">✅ ПРАВИЛЬНО</h2>
+          <div class="modal-name">${question.name}</div>
+          <div class="modal-points">${teams[currentTeamIndex].name}: +${points} очков</div>
+          <button class="answer-button" onclick="continueGame()">▶ Продолжить</button>
+        </div>
+      </div>
+    `);
+  }else{
+    playBeep("short");
+    showSimpleModal("❌ Неверно","Ход переходит следующей команде",()=>{
+      switchTeam();
+      restartTimer();
+    });
+  }
+
+  input.value="";
+}
+
+function continueGame(){
+  const modal=document.getElementById("correctModal");
+  if(modal) modal.remove();
+  if(gameMode==="image") nextImageRound();
+  else nextPoemRound();
+}
+
+function nextImageRound(){
+  if(gameFinished)return;
+  clearInterval(timerInterval);
+  currentIndex++;
+  if(currentIndex>=zhkList.length){
+    showRoundBreak();
+    return;
+  }
+  image.src=zhkList[currentIndex].image;
+  createGrid();
+  resetTimer();
+  startTimer();
+}
+
+function showRoundBreak(){
+  clearInterval(timerInterval);
+  let scoreTable=getScoreTableHtml();
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="roundBreakModal" class="full-modal">
+      <div class="modal-card">
+        <div class="game-over-title">🏁 РАУНД 1 ЗАВЕРШЁН</div>
+        <div class="game-over-score">${scoreTable}</div>
+        <div class="modal-points">Следующий раунд: загадки по ЖК<br>50 / 30 / 15 очков</div>
+        <button class="start-button" onclick="startPoemRound()">▶ НАЧАТЬ РАУНД 2</button>
+      </div>
+    </div>
+  `);
+}
+
+function startPoemRound(){
+  const modal=document.getElementById("roundBreakModal");
+  if(modal) modal.remove();
+  gameMode="poem";
+  currentPoemIndex=0;
+  hintLevel=0;
+  roundBadge.innerText="РАУНД 2 • ЗАГАДКИ";
+  info.innerText="📜 Раунд 2: без подсказки — 50 очков, после первой — 30, после второй — 15";
+  imageWrapper.style.display="none";
+  poemCard.style.display="block";
+  hint1Button.style.display="inline-block";
+  hint2Button.style.display="inline-block";
+  loadPoemQuestion();
+  resetTimer();
+  startTimer();
+}
+
+function loadPoemQuestion(){
+  const q=poemQuestions[currentPoemIndex];
+  hintLevel=0;
+  poemCount.innerText=`Вопрос ${currentPoemIndex+1} из ${poemQuestions.length}`;
+  poemText.innerHTML=q.poem.join("<br>");
+  hintsBox.innerHTML="";
+  hint1Button.disabled=false;
+  hint2Button.disabled=false;
+  hint2Button.style.display="inline-block";
+  updatePrice();
+  updateTurn();
+}
+
+function updatePrice(){
+  currentPrice.innerText=`Стоимость вопроса: ${getPoemPoints()} очков`;
+}
+
+function showHint(num){
+  if(gameMode!=="poem"||gameFinished)return;
+  const q=poemQuestions[currentPoemIndex];
+  if(num===1 && hintLevel<1){
+    hintLevel=1;
+    hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 1: ${q.hints[0]}</div>`;
+    hint1Button.disabled=true;
+  }
+  if(num===2 && hintLevel<2){
+    hintLevel=2;
+    if(hintLevel===2 && !hint1Button.disabled && !hintsBox.innerHTML.includes("Подсказка 1")){
+      hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 1: ${q.hints[0]}</div>`;
+      hint1Button.disabled=true;
+    }
+    hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 2: ${q.hints[1]}</div>`;
+    hint2Button.disabled=true;
+  }
+  updatePrice();
+}
+
+function nextPoemRound(){
+  clearInterval(timerInterval);
+  currentPoemIndex++;
+  if(currentPoemIndex>=poemQuestions.length){
+    showWinner();
+    return;
+  }
+  loadPoemQuestion();
+  resetTimer();
+  startTimer();
+}
+
+function getScoreTableHtml(){
+  let sorted=[...teams].sort((a,b)=>b.score-a.score);
+  return sorted.map((team,index)=>{
+    const medal=index===0?"🥇":index===1?"🥈":index===2?"🥉":"";
+    return `${medal} ${index+1}. ${team.name} — ${team.score} очков`;
+  }).join("<br>");
+}
+
+function showWinner(){
+  clearInterval(timerInterval);
+  gameFinished=true;
+  gameStarted=false;
+  isPaused=false;
+
+  let sorted=[...teams].sort((a,b)=>b.score-a.score);
+  let maxScore=sorted[0].score;
+  let winners=sorted.filter(t=>t.score===maxScore);
+  let winnerTitle=winners.length>1 ? "🤝 Ничья!" : "🏆 Победила: "+winners[0].name;
+
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="gameOverModal" class="full-modal">
+      <div class="modal-card">
+        <div class="game-over-title">ИГРА ОКОНЧЕНА</div>
+        <div class="game-over-score">
+          ${winnerTitle}<br><br>
+          ${getScoreTableHtml()}
+        </div>
+        <button class="start-button" onclick="location.reload()">Начать заново</button>
+        <div class="creator-final">
+          Создано:<br>
+          <strong>Владислав Киктев</strong><br>
+          Амбассадор АЯКС | Офис 24
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function showSimpleModal(title,text,callback){
+  clearInterval(timerInterval);
+  const id="simpleModal";
+  const old=document.getElementById(id);
+  if(old) old.remove();
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="${id}" class="modal">
+      <div class="modal-card">
+        <h2 class="modal-title" style="color:${title.includes("Неверно")?"#fb7185":"#67e8f9"}">${title}</h2>
+        <div class="modal-points">${text}</div>
+        <button class="answer-button" onclick="closeSimpleModal()">ОК</button>
+      </div>
+    </div>
+  `);
+  window.__simpleModalCallback=callback;
+}
+
+function closeSimpleModal(){
+  const modal=document.getElementById("simpleModal");
+  if(modal) modal.remove();
+  const cb=window.__simpleModalCallback;
+  window.__simpleModalCallback=null;
+  if(typeof cb==="function") cb();
+  else if(gameStarted&&!gameFinished) startTimer();
+}
+
+renderTeamInputs();
+createGrid();
+</script>
+
+</body>
+</html>
