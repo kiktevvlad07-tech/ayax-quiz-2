@@ -164,8 +164,8 @@ h1{
   grid-template-rows:repeat(4,1fr);
 }
 .tile{
-  background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(49,46,129,.94));
-  border:1px solid rgba(56,189,248,.25);
+  background:linear-gradient(135deg,#020617,#111827);
+  border:1px solid rgba(56,189,248,.55);
   cursor:pointer;
   transition:.28s;
   display:flex;
@@ -176,7 +176,7 @@ h1{
   color:#e0f2fe;
   text-shadow:0 0 16px rgba(34,211,238,.55);
 }
-.tile:hover{background:linear-gradient(135deg,rgba(14,165,233,.62),rgba(168,85,247,.62));}
+.tile:hover{background:linear-gradient(135deg,#0f172a,#312e81);box-shadow:inset 0 0 24px rgba(34,211,238,.22);}
 .tile.hidden{opacity:0;transform:scale(.94);pointer-events:none;}
 .controls{
   margin-top:28px;
@@ -463,8 +463,8 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none;}
 <div class="controls">
   <input type="text" id="answerInput" placeholder="Введите название ЖК"/>
   <button class="answer-button" onclick="checkAnswer()">Ответить</button>
-  <button class="hint-button" id="hint1Button" onclick="showHint(1)" style="display:none;">💡 Подсказка 1</button>
-  <button class="hint-button" id="hint2Button" onclick="showHint(2)" style="display:none;">💡 Подсказка 2</button>
+  <button class="hint-button" id="hint1Button" onclick="showHint(1)" style="display:none;">💡 Подсказка А</button>
+  <button class="hint-button" id="hint2Button" onclick="showHint(2)" style="display:none;">💡 Подсказка Б</button>
   <button class="pass-button" onclick="passTurn()">Передать ход</button>
   <button class="pause-button" id="pauseButton" onclick="togglePause()">⏸ Пауза</button>
   <button class="neutral-button" onclick="restartTimer()">Перезапустить таймер</button>
@@ -564,6 +564,7 @@ let gameFinished=false;
 let isPaused=false;
 let gameMode="image";
 let hintLevel=0;
+let shownHints=[];
 
 const image=document.getElementById("zhkImage");
 const imageWrapper=document.getElementById("imageWrapper");
@@ -767,8 +768,9 @@ function getCurrentQuestion(){
 }
 
 function getPoemPoints(){
-  if(hintLevel===0) return 50;
-  if(hintLevel===1) return 30;
+  const used=shownHints.length;
+  if(used===0) return 50;
+  if(used===1) return 30;
   return 15;
 }
 
@@ -881,6 +883,7 @@ function startPoemRound(){
 function loadPoemQuestion(){
   const q=poemQuestions[currentPoemIndex];
   hintLevel=0;
+  shownHints=[];
   poemCount.innerText=`Вопрос ${currentPoemIndex+1} из ${poemQuestions.length}`;
   poemText.innerHTML=q.poem.join("<br>");
   hintsBox.innerHTML="";
@@ -898,20 +901,19 @@ function updatePrice(){
 function showHint(num){
   if(gameMode!=="poem"||gameFinished)return;
   const q=poemQuestions[currentPoemIndex];
-  if(num===1 && hintLevel<1){
-    hintLevel=1;
-    hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 1: ${q.hints[0]}</div>`;
-    hint1Button.disabled=true;
-  }
-  if(num===2 && hintLevel<2){
-    hintLevel=2;
-    if(hintLevel===2 && !hint1Button.disabled && !hintsBox.innerHTML.includes("Подсказка 1")){
-      hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 1: ${q.hints[0]}</div>`;
-      hint1Button.disabled=true;
-    }
-    hintsBox.innerHTML+=`<div class="hint-line">💡 Подсказка 2: ${q.hints[1]}</div>`;
-    hint2Button.disabled=true;
-  }
+
+  if(shownHints.includes(num)) return;
+
+  shownHints.push(num);
+  hintLevel=shownHints.length;
+
+  const hintText=q.hints[num-1];
+  const hintLabel=num===1 ? "Подсказка А" : "Подсказка Б";
+  hintsBox.innerHTML+=`<div class="hint-line">💡 ${hintLabel}: ${hintText}</div>`;
+
+  if(num===1) hint1Button.disabled=true;
+  if(num===2) hint2Button.disabled=true;
+
   updatePrice();
 }
 
